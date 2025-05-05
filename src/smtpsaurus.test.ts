@@ -1,6 +1,7 @@
 import { expect } from "jsr:@std/expect";
 import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
 
+import { readMessage } from "./messages.ts";
 import { DEFAULT_DOMAIN } from "./mod.ts";
 import { DEFAULT_HOSTNAME, DEFAULT_PORT, SmtpServer } from "./smtpsaurus.ts";
 
@@ -18,19 +19,18 @@ describe("SmtpServer", () => {
 
 		it("responds with 220 Simple Mail Transfer Service Ready on successful connection", async () => {
 			const connection = await createConnection();
-			const writer = connection.writable.getWriter();
 			const clientDomain = "qolloquia.com";
 
-			expect(await readLine(connection)).toMatch(
+			expect(await readMessage(connection)).toMatch(
 				new RegExp([
 					`^220 ${DEFAULT_DOMAIN} Simple Mail Transfer Service Ready`,
 					"",
 				].join("\r\n")),
 			);
 
-			await writeMessage(writer, `EHLO ${clientDomain}\r\n`);
+			await writeMessage(connection, `EHLO ${clientDomain}\r\n`);
 
-			expect(await readLine(connection)).toMatch(
+			expect(await readMessage(connection)).toMatch(
 				new RegExp([
 					`250-${DEFAULT_DOMAIN} greets ${clientDomain}`,
 					"250-SIZE 26214400",
@@ -66,7 +66,7 @@ describe("SmtpServer", () => {
 				hostname: DEFAULT_HOSTNAME,
 				port: customPort,
 			});
-			const message = await readLine(connection);
+			const message = await readMessage(connection);
 
 			expect(message).toMatch(
 				new RegExp(
@@ -86,41 +86,13 @@ function createConnection(): Promise<Deno.TcpConn> {
 	});
 }
 
-async function readLine(connection: Deno.TcpConn): Promise<string | undefined> {
-	const reader = connection.readable.getReader();
-
-	try {
-		let data = new Uint8Array();
-
-		while (true) {
-			const { value, done } = await reader.read();
-
-			if (done) return;
-
-			data = new Uint8Array([...data, ...value]);
-
-			const secondLastIndex = data.length - 2;
-			const lastIndex = data.length - 1;
-			const crlfEncountered = data[secondLastIndex] === 13 &&
-				data[lastIndex] === 10;
-
-			if (crlfEncountered) {
-				const textDecoder = new TextDecoder();
-				const message = textDecoder.decode(data);
-
-				return message;
-			}
-		}
-	} finally {
-		await reader.releaseLock();
-	}
-}
-
 async function writeMessage(
-	writer: WritableStreamDefaultWriter<Uint8Array<ArrayBufferLike>>,
+	connection: Deno.TcpConn,
 	message: string,
 ): Promise<void> {
 	const textEncoder = new TextEncoder();
+	const writer = connection.writable.getWriter();
 
 	await writer.write(textEncoder.encode(message));
+	await writer.releaseLock();
 }
