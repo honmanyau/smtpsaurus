@@ -1,5 +1,7 @@
 import { expect } from "jsr:@std/expect";
 import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
+// @ts-types="npm:@types/nodemailer"
+import nodemailer from "nodemailer";
 
 import { readMessage } from "./messages.ts";
 import { DEFAULT_DOMAIN } from "./mod.ts";
@@ -41,6 +43,44 @@ describe("SmtpServer", () => {
 			);
 
 			await connection.close();
+		});
+
+		it("process a well-formed sequence of commands and arguments successfully", async () => {
+			const transporter = nodemailer.createTransport({
+				host: DEFAULT_HOSTNAME,
+				port: DEFAULT_PORT,
+				secure: false,
+			});
+
+			const recipients = ["deno@smtpsaurus.com", "node@smtpsaurus.com"];
+			const subject = crypto.randomUUID();
+			const body = crypto.randomUUID();
+
+			const info = await transporter.sendMail({
+				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				to: recipients.join(", "),
+				subject,
+				text: body,
+				html: `<b>${body}</b>`,
+			});
+
+			expect(info.response).toBe("250 OK");
+			expect(info.accepted).toEqual(expect.arrayContaining(recipients));
+			expect(info.rejected).toEqual([]);
+
+			const info2 = await transporter.sendMail({
+				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				to: recipients.join(", "),
+				subject,
+				text: body,
+				html: `<b>${body}</b>`,
+			});
+
+			expect(info2.response).toBe("250 OK");
+			expect(info2.accepted).toEqual(expect.arrayContaining(recipients));
+			expect(info2.rejected).toEqual([]);
+
+			transporter.close();
 		});
 	});
 
