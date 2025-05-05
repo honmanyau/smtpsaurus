@@ -16,9 +16,9 @@ export type ServerConfig = {
 
 export class SmtpServer {
 	domain: string;
-	listener: Deno.TcpListener;
 	port: number;
 
+	private listener: Deno.TcpListener | undefined;
 	private mainLoopExitSignal: Promise<void>;
 
 	constructor(config?: ServerConfig) {
@@ -146,7 +146,7 @@ export class SmtpServer {
 		while (nextLine) {
 			emailBodyLines.push(nextLine);
 
-			if (nextLine.endsWith(`${CRLF}.${CRLF}`)) break;
+			if (emailBodyLines.join("").endsWith(`${CRLF}.${CRLF}`)) break;
 
 			nextLine = await readMessage(connection);
 		}
@@ -154,6 +154,7 @@ export class SmtpServer {
 		await writeMessage(connection, `${250} OK${CRLF}`);
 
 		// Handle QUIT
+
 		const quitLine = await readMessage(connection);
 
 		// TODO|Honman Yau|2025-05-05
@@ -167,7 +168,7 @@ export class SmtpServer {
 	}
 
 	private async startMainLoop(): Promise<void> {
-		while (true) {
+		while (this.listener) {
 			try {
 				const connection = await this.listener.accept();
 
@@ -176,7 +177,7 @@ export class SmtpServer {
 				connection.close();
 			} catch (error) {
 				if (error instanceof Deno.errors.BadResource) {
-					return;
+					continue;
 				}
 
 				throw error;
@@ -185,7 +186,8 @@ export class SmtpServer {
 	}
 
 	async cleanUp(): Promise<void> {
-		this.listener.close();
+		this.listener?.close();
+		this.listener = undefined;
 		await this.mainLoopExitSignal;
 	}
 }
