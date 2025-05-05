@@ -1,6 +1,11 @@
 export const SUPPORTED_COMMANDS = [
 	"HELO",
 	"EHLO",
+	"MAIL",
+	"RCPT",
+	"DATA",
+	"QUIT",
+	"HELP",
 ] as const;
 
 export const SUPPORTED_COMMAND_LOOKUP = SUPPORTED_COMMANDS.reduce(

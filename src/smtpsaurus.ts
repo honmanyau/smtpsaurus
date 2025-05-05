@@ -53,8 +53,8 @@ export class SmtpServer {
 
 		// Handle EHLO and HELO
 		const helloLine = await readMessage(connection);
-		const [_, helloCommand, helloMessage] =
-			helloLine?.match(/^([A-Z]+?) (.+)\r\n$/) ?? [];
+		const [, helloCommand, helloMessage] =
+			helloLine?.match(new RegExp(`^([A-Z]+?) (.+)${CRLF}$`)) ?? [];
 
 		if (helloCommand === undefined) {
 			await writeMessage(
@@ -96,6 +96,74 @@ export class SmtpServer {
 		await await writeMessage(connection, `${250}-SIZE 26214400${CRLF}`);
 		await await writeMessage(connection, `${250}-8BITMIME${CRLF}`);
 		await await writeMessage(connection, `${250} HELP${CRLF}`);
+
+		// Handle MAIL
+		const mailLine = await readMessage(connection);
+		const [, mailCommand, senderEmail] = mailLine?.match(
+			new RegExp(`^(MAIL) FROM:<(.+?@.+?\..+)${CRLF}$`),
+		) ?? [];
+
+		// TODO|Honman Yau|2025-05-05
+		// Handle error cases for the MAIL command.
+
+		await writeMessage(connection, `${250} OK${CRLF}`);
+
+		// Handle RCPT
+		const recipientEmails: string[] = [];
+
+		let nextLine = await readMessage(connection);
+
+		while (nextLine?.startsWith("RCPT")) {
+			const [, recipientCommand, recipientEmail] = nextLine?.match(
+				new RegExp(`^(RCPT) TO:<(.+?@.+?\..+)${CRLF}$`),
+			) ?? [];
+
+			// TODO|Honman Yau|2025-05-05
+			// Handle error cases for the RCPT command.
+
+			recipientEmails.push(recipientEmail);
+			await writeMessage(connection, `${250} OK${CRLF}`);
+
+			nextLine = await readMessage(connection);
+		}
+
+		// Handle DATA
+		const dataLine = nextLine;
+
+		// TODO|Honman Yau|2025-05-05
+		// Handle error cases for the DATA command.
+		if (dataLine !== `DATA${CRLF}`) {}
+
+		await writeMessage(
+			connection,
+			`${354} Start mail input; end with <CRLF>.<CRLF>${CRLF}`,
+		);
+
+		const emailBodyLines: string[] = [];
+
+		nextLine = await readMessage(connection);
+
+		while (nextLine) {
+			emailBodyLines.push(nextLine);
+
+			if (nextLine.endsWith(`${CRLF}.${CRLF}`)) break;
+
+			nextLine = await readMessage(connection);
+		}
+
+		await writeMessage(connection, `${250} OK${CRLF}`);
+
+		// Handle QUIT
+		const quitLine = await readMessage(connection);
+
+		// TODO|Honman Yau|2025-05-05
+		// Handle error cases for the QUIT command.
+		if (quitLine !== `QUIT${CRLF}`) {}
+
+		await writeMessage(
+			connection,
+			`${this.domain} Service closing transmission channel${CRLF}`,
+		);
 	}
 
 	private async startMainLoop(): Promise<void> {
