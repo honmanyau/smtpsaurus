@@ -185,7 +185,7 @@ export class SmtpServer {
 		}
 	}
 
-	async cleanUp(): Promise<void> {
+	async stop(): Promise<void> {
 		this.listener?.close();
 		this.listener = undefined;
 		await this.mainLoopExitSignal;

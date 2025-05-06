@@ -16,7 +16,7 @@ describe("SmtpServer", () => {
 		});
 
 		afterEach(async () => {
-			await server.cleanUp();
+			await server.stop();
 		});
 
 		it("responds with 220 Simple Mail Transfer Service Ready on successful connection", async () => {
@@ -98,7 +98,7 @@ describe("SmtpServer", () => {
 		});
 
 		afterEach(async () => {
-			await server.cleanUp();
+			await server.stop();
 		});
 
 		it("can be configured with optional parameters", async () => {
