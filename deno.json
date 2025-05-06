@@ -27,6 +27,8 @@
 	],
 	"imports": {
 		"$fresh/": "https://deno.land/x/fresh@1.7.3/",
+		"@std/expect": "jsr:@std/expect@^1.0.15",
+		"@std/testing": "jsr:@std/testing@^1.0.11",
 		"nodemailer": "npm:nodemailer@^7.0.2",
 		"preact": "https://esm.sh/preact@10.22.0",
 		"preact/": "https://esm.sh/preact@10.22.0/",
