@@ -60,7 +60,7 @@ const server = new SmtpServer({
 
 ## Examples
 
-## Using `smtpsaurus` in tests 🧪
+### Using `smtpsaurus` in tests 🧪
 
 ```ts
 import { expect } from "jsr:@std/expect";
