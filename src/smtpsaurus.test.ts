@@ -1,5 +1,6 @@
-import { expect } from "jsr:@std/expect";
-import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
+import { assertExists } from "$std/assert/assert_exists.ts";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 // @ts-types="npm:@types/nodemailer"
 import nodemailer from "nodemailer";
 
@@ -79,6 +80,105 @@ describe("SmtpServer", () => {
 			expect(info2.response).toBe("250 OK");
 			expect(info2.accepted).toEqual(expect.arrayContaining(recipients));
 			expect(info2.rejected).toEqual([]);
+
+			transporter.close();
+		});
+
+		it("allows e-mail data to be fetched for a successfully sent message by Message-ID", async () => {
+			const transporter = nodemailer.createTransport({
+				host: DEFAULT_HOSTNAME,
+				port: DEFAULT_PORT,
+				secure: false,
+			});
+
+			const recipients = ["deno@smtpsaurus.com", "node@smtpsaurus.com"];
+			const subject = crypto.randomUUID();
+			const body = crypto.randomUUID();
+
+			const info = await transporter.sendMail({
+				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				to: recipients.join(", "),
+				subject,
+				text: body,
+				html: `<b>${body}</b>`,
+			});
+
+			const data = await server.mailbox.get(info.messageId);
+
+			assertExists(data);
+			expect(data.messageId).toBe(info.messageId);
+			expect(data.senderEmail).toBe(info.envelope.from);
+			expect(data.recipientEmails).toEqual(
+				expect.arrayContaining(info.envelope.to),
+			);
+
+			transporter.close();
+		});
+
+		it("allows e-mail data to be fetched for a successfully sent message by sender e-mail", async () => {
+			const transporter = nodemailer.createTransport({
+				host: DEFAULT_HOSTNAME,
+				port: DEFAULT_PORT,
+				secure: false,
+			});
+
+			const recipients = ["deno@smtpsaurus.com", "node@smtpsaurus.com"];
+			const subject = crypto.randomUUID();
+			const body = crypto.randomUUID();
+
+			const info = await transporter.sendMail({
+				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				to: recipients.join(", "),
+				subject,
+				text: body,
+				html: `<b>${body}</b>`,
+			});
+
+			const data = await server.mailbox.getBySender(
+				String(info.envelope.from),
+			);
+
+			assertExists(data);
+			expect(data.messageId).toBe(info.messageId);
+			expect(data.senderEmail).toBe(info.envelope.from);
+			expect(data.recipientEmails).toEqual(
+				expect.arrayContaining(info.envelope.to),
+			);
+
+			transporter.close();
+		});
+
+		it("allows e-mail data to be fetched for a successfully sent message by recipient e-mail", async () => {
+			const transporter = nodemailer.createTransport({
+				host: DEFAULT_HOSTNAME,
+				port: DEFAULT_PORT,
+				secure: false,
+			});
+
+			const recipients = ["deno@smtpsaurus.com", "node@smtpsaurus.com"];
+			const subject = crypto.randomUUID();
+			const body = crypto.randomUUID();
+
+			const info = await transporter.sendMail({
+				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				to: recipients.join(", "),
+				subject,
+				text: body,
+				html: `<b>${body}</b>`,
+			});
+
+			for (const recipientEmail of info.envelope.to) {
+				const data = await server.mailbox.getByRecipient(
+					recipientEmail,
+				);
+
+				assertExists(data);
+				expect(data.messageId).toBe(info.messageId);
+				expect(data.senderEmail).toBe(info.envelope.from);
+				expect(data.recipientEmails).toEqual(
+					expect.arrayContaining(info.envelope.to),
+				);
+			}
 
 			transporter.close();
 		});

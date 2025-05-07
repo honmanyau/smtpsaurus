@@ -1,8 +1,10 @@
 import { readMessage, writeMessage } from "./messages.ts";
+import { parseHeaderSection } from "./parsers.ts";
 import {
 	SUPPORTED_COMMAND_LOOKUP,
 	UNSUPPORTED_COMMAND_LOOKUP,
 } from "./smtp-commands.ts";
+import { store } from "./store.ts";
 
 export const CRLF = "\r\n";
 export const DEFAULT_HOSTNAME = "127.0.0.1";
@@ -17,6 +19,12 @@ export type ServerConfig = {
 export class SmtpServer {
 	domain: string;
 	port: number;
+
+	mailbox = {
+		get: store.get,
+		getBySender: store.getBySender,
+		getByRecipient: store.getByRecipient,
+	} as const;
 
 	private listener: Deno.TcpListener | undefined;
 	private mainLoopExitSignal: Promise<void>;
@@ -139,22 +147,31 @@ export class SmtpServer {
 			`${354} Start mail input; end with <CRLF>.<CRLF>${CRLF}`,
 		);
 
-		const emailBodyLines: string[] = [];
+		const emailLines: string[] = [];
 
 		nextLine = await readMessage(connection);
 
 		while (nextLine) {
-			emailBodyLines.push(nextLine);
+			emailLines.push(nextLine);
 
-			if (emailBodyLines.join("").endsWith(`${CRLF}.${CRLF}`)) break;
+			if (emailLines.join("").endsWith(`${CRLF}.${CRLF}`)) break;
 
 			nextLine = await readMessage(connection);
 		}
 
+		const email = emailLines.join("\r\n");
+		const headerSection = parseHeaderSection(email);
+
+		await store.set({
+			email: email,
+			messageId: headerSection.messageId,
+			senderEmail: headerSection.from,
+			recipientEmails: headerSection.to,
+		});
+
 		await writeMessage(connection, `${250} OK${CRLF}`);
 
 		// Handle QUIT
-
 		const quitLine = await readMessage(connection);
 
 		// TODO|Honman Yau|2025-05-05
