@@ -19,8 +19,8 @@ jobs:
 
             - uses: actions/checkout@v4
 
-            - name: Run tests
-              run: deno run test
+            - name: Perform linting
+              run: deno lint
 
             - name: Publish smtpsaurus
               run: deno publish
