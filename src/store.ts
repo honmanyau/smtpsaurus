@@ -5,7 +5,7 @@ const MESSAGE_ID_BY_SENDER_KEY_PART = "smtpsaurus-message-id-by-sender";
 const MESSAGE_ID_BY_RECIPIENT_KEY_PART = "smtpsaurus-message-id-by-recipient";
 
 export type Data = {
-	body: string;
+	email: string;
 	messageId: string;
 	senderEmail: string;
 	recipientEmails: string[];

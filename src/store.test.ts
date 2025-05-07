@@ -1,10 +1,12 @@
 import { expect } from "@std/expect";
 import { describe, it } from "@std/testing/bdd";
-import { Data, store } from "./store.ts";
+
+import { store } from "./store.ts";
+import { generateEmail } from "./test-helpers.ts";
 
 describe("The message store", () => {
 	it("get(), set(), and invalidate() work", async () => {
-		const data = generateData();
+		const data = generateEmail();
 
 		await store.set(data);
 
@@ -16,7 +18,7 @@ describe("The message store", () => {
 	});
 
 	it("getBySender() works", async () => {
-		const data = generateData();
+		const data = generateEmail();
 
 		await store.set(data);
 
@@ -29,7 +31,7 @@ describe("The message store", () => {
 	});
 
 	it("getByRecipient() works", async () => {
-		const data = generateData();
+		const data = generateEmail();
 
 		await store.set(data);
 
@@ -46,37 +48,3 @@ describe("The message store", () => {
 		}
 	});
 });
-
-function generateData(): Data {
-	const senderEmail = "rawr@smtpsaurus.email";
-	const recipientEmails = ["deno@smtpsaurus.email", "node@smtpsaurus.email"];
-	const messageId = `<${crypto.randomUUID()}@smtpsaurus.email`;
-	const body = `From: smtpsaurus <${senderEmail}>
-To: ${recipientEmails.join(", ")}
-Subject: Rawr!
-Message-ID: <dc2c3c7e-605c-a3cc-6ffa-4c109d53bd5b@smtpsaurus.email>
-Date: Tue, 06 May 2025 11:36:15 +0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
- boundary="--_NmP-0f78f62effa5c5f5-Part_1"
-
-,----_NmP-0f78f62effa5c5f5-Part_1
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-Hello, Raaawrld!
-----_NmP-0f78f62effa5c5f5-Part_1
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-<b>Hello, Raaawrld!</b>
-----_NmP-0f78f62effa5c5f5-Part_1--
-.`;
-
-	return {
-		body,
-		messageId,
-		senderEmail,
-		recipientEmails,
-	};
-}
