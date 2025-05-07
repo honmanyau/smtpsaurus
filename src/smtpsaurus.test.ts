@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 // @ts-types="npm:@types/nodemailer"
 import nodemailer from "nodemailer";
 
+import { DEFAULT_DOMAIN, DEFAULT_HOSTNAME, DEFAULT_PORT } from "./constants.ts";
 import { readMessage } from "./messages.ts";
-import { DEFAULT_DOMAIN } from "./mod.ts";
-import { DEFAULT_HOSTNAME, DEFAULT_PORT, SmtpServer } from "./smtpsaurus.ts";
+import { SmtpServer } from "./smtpsaurus.ts";
 
 describe("SmtpServer", () => {
 	describe("with default server settings", () => {
@@ -122,28 +122,49 @@ describe("SmtpServer", () => {
 				secure: false,
 			});
 
-			const recipients = ["deno@smtpsaurus.com", "node@smtpsaurus.com"];
-			const subject = crypto.randomUUID();
-			const body = crypto.randomUUID();
+			const senderEmail = `${crypto.randomUUID()}@smtpsaurus.email`;
+			const recipients = [
+				`${crypto.randomUUID()}@smtpsaurus.email`,
+				`${crypto.randomUUID()}@smtpsaurus.email`,
+			];
+			const subject1 = crypto.randomUUID();
+			const subject2 = crypto.randomUUID();
+			const body1 = crypto.randomUUID();
+			const body2 = crypto.randomUUID();
 
 			const info = await transporter.sendMail({
-				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				from: `"Aya the Narwhal" <${senderEmail}>`,
 				to: recipients.join(", "),
-				subject,
-				text: body,
-				html: `<b>${body}</b>`,
+				subject: subject1,
+				text: body1,
+				html: `<b>${body1}</b>`,
+			});
+
+			const info2 = await transporter.sendMail({
+				from: `"Aya the Narwhal" <${senderEmail}>`,
+				to: recipients.join(", "),
+				subject: subject2,
+				text: body1,
+				html: `<b>${body2}</b>`,
 			});
 
 			const data = await server.mailbox.getBySender(
 				String(info.envelope.from),
 			);
 
-			assertExists(data);
-			expect(data.messageId).toBe(info.messageId);
-			expect(data.senderEmail).toBe(info.envelope.from);
-			expect(data.recipientEmails).toEqual(
-				expect.arrayContaining(info.envelope.to),
-			);
+			expect(data).toHaveLength(2);
+			expect(data).toEqual(expect.arrayContaining([
+				expect.objectContaining({
+					messageId: info.messageId,
+					senderEmail: info.envelope.from,
+					recipientEmails: info.envelope.to,
+				}),
+				expect.objectContaining({
+					messageId: info2.messageId,
+					senderEmail: info2.envelope.from,
+					recipientEmails: info2.envelope.to,
+				}),
+			]));
 
 			transporter.close();
 		});
@@ -155,16 +176,30 @@ describe("SmtpServer", () => {
 				secure: false,
 			});
 
-			const recipients = ["deno@smtpsaurus.com", "node@smtpsaurus.com"];
-			const subject = crypto.randomUUID();
-			const body = crypto.randomUUID();
+			const senderEmail = `${crypto.randomUUID()}@smtpsaurus.email`;
+			const recipients = [
+				`${crypto.randomUUID()}@smtpsaurus.email`,
+				`${crypto.randomUUID()}@smtpsaurus.email`,
+			];
+			const subject1 = crypto.randomUUID();
+			const subject2 = crypto.randomUUID();
+			const body1 = crypto.randomUUID();
+			const body2 = crypto.randomUUID();
 
 			const info = await transporter.sendMail({
-				from: `"Aya the Narwhal" <aya.the.narwhal@smtpsaurus.email>`,
+				from: `"Aya the Narwhal" <${senderEmail}>`,
 				to: recipients.join(", "),
-				subject,
-				text: body,
-				html: `<b>${body}</b>`,
+				subject: subject1,
+				text: body1,
+				html: `<b>${body1}</b>`,
+			});
+
+			const info2 = await transporter.sendMail({
+				from: `"Aya the Narwhal" <${senderEmail}>`,
+				to: recipients.join(", "),
+				subject: subject2,
+				text: body1,
+				html: `<b>${body2}</b>`,
 			});
 
 			for (const recipientEmail of info.envelope.to) {
@@ -172,12 +207,19 @@ describe("SmtpServer", () => {
 					recipientEmail,
 				);
 
-				assertExists(data);
-				expect(data.messageId).toBe(info.messageId);
-				expect(data.senderEmail).toBe(info.envelope.from);
-				expect(data.recipientEmails).toEqual(
-					expect.arrayContaining(info.envelope.to),
-				);
+				expect(data).toHaveLength(2);
+				expect(data).toEqual(expect.arrayContaining([
+					expect.objectContaining({
+						messageId: info.messageId,
+						senderEmail: info.envelope.from,
+						recipientEmails: info.envelope.to,
+					}),
+					expect.objectContaining({
+						messageId: info2.messageId,
+						senderEmail: info2.envelope.from,
+						recipientEmails: info2.envelope.to,
+					}),
+				]));
 			}
 
 			transporter.close();

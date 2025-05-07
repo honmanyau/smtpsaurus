@@ -19,32 +19,47 @@ describe("The message store", () => {
 
 	it("getBySender() works", async () => {
 		const data = generateEmail();
+		const data2 = generateEmail();
 
 		await store.set(data);
+		await store.set(data2);
 
-		expect(await store.get(data.messageId)).toEqual(data);
-		expect(await store.getBySender(data.senderEmail)).toEqual(data);
+		const emails = await store.getBySender(data.senderEmail);
+
+		expect(emails).toHaveLength(2);
+		expect(emails).toEqual(expect.arrayContaining([data, data2]));
 
 		await store.invalidate(data.messageId);
 
-		expect(await store.getBySender(data.senderEmail)).toBeNull();
+		expect(await store.getBySender(data.senderEmail)).toEqual([data2]);
+
+		await store.invalidate(data2.messageId);
+
+		expect(await store.getBySender(data.senderEmail)).toEqual([]);
 	});
 
 	it("getByRecipient() works", async () => {
 		const data = generateEmail();
+		const data2 = generateEmail();
 
 		await store.set(data);
+		await store.set(data2);
 
-		expect(await store.get(data.messageId)).toEqual(data);
+		const emails = await store.getByRecipient(data.recipientEmails[0]);
 
-		for (const recipientEmail of data.recipientEmails) {
-			expect(await store.getByRecipient(recipientEmail)).toEqual(data);
-		}
+		expect(emails).toHaveLength(2);
+		expect(emails).toEqual(expect.arrayContaining([data, data2]));
 
 		await store.invalidate(data.messageId);
 
-		for (const recipientEmail of data.recipientEmails) {
-			expect(await store.getByRecipient(recipientEmail)).toBeNull();
-		}
+		expect(await store.getByRecipient(data.recipientEmails[0])).toEqual([
+			data2,
+		]);
+
+		await store.invalidate(data2.messageId);
+
+		expect(await store.getByRecipient(data.recipientEmails[0])).toEqual(
+			[],
+		);
 	});
 });

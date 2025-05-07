@@ -10,7 +10,7 @@ import {
 	SUPPORTED_COMMAND_LOOKUP,
 	UNSUPPORTED_COMMAND_LOOKUP,
 } from "./smtp-commands.ts";
-import { Data, store } from "./store.ts";
+import { store } from "./store.ts";
 
 /**
  * Configuration options for an `smtpsaurus` instance.
@@ -50,21 +50,17 @@ export class SmtpServer {
 	/**
 	 * Provides access to mailbox operations, such as retrieving emails.
 	 *
-	 * @property {function(string): Promise<Data | null>} get Retrieve an e-mail
+	 * @property {function(string): Promise<EmailData | null>} get Retrieve an e-mail
 	 * by its Message-ID.
-	 * @property {function(string): Promise<Data | null>} getBySender Retrieve
-	 * emails sent by a
+	 * @property {function(string): Promise<(EmailData | null)[]>} getBySender Retrieve
+	 * all e-mails sent from the a given e-mail address.
 	 * specific sender.
-	 * @property {function(string): Promise<Data | null>} getByRecipient
-	 * Retrieve an all e-mails sent to a specific recipient.
+	 * @property {function(string): Promise<(EmailData | null)[]>} getByRecipient
+	 * Retrieve all e-mails sent to a specific recipient.
 	 */
-	mailbox: {
-		get: (messageId: string) => Promise<Data | null>;
-		getBySender: (senderEmail: string) => Promise<Data | null>;
-		getByRecipient: (recipientEmail: string) => Promise<Data | null>;
-	} = {
+	mailbox = {
 		get: store.get,
-		getBySender: store.getByRecipient,
+		getBySender: store.getBySender,
 		getByRecipient: store.getByRecipient,
 	} as const;
 

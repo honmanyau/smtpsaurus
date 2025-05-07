@@ -1,6 +1,6 @@
-import { Data } from "./store.ts";
+import { EmailData } from "./store.ts";
 
-export function generateEmail(): Data {
+export function generateEmail(): EmailData {
 	const senderEmail = "rawr@smtpsaurus.email";
 	const recipientEmails = ["deno@smtpsaurus.email", "node@smtpsaurus.email"];
 	const messageId = `<${crypto.randomUUID()}@smtpsaurus.email>`;
