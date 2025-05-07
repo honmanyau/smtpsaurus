@@ -1,35 +1,94 @@
+import {
+	CRLF,
+	DEFAULT_DOMAIN,
+	DEFAULT_HOSTNAME,
+	DEFAULT_PORT,
+} from "./constants.ts";
 import { readMessage, writeMessage } from "./messages.ts";
 import { parseHeaderSection } from "./parsers.ts";
 import {
 	SUPPORTED_COMMAND_LOOKUP,
 	UNSUPPORTED_COMMAND_LOOKUP,
 } from "./smtp-commands.ts";
-import { store } from "./store.ts";
+import { Data, store } from "./store.ts";
 
-export const CRLF = "\r\n";
-export const DEFAULT_HOSTNAME = "127.0.0.1";
-export const DEFAULT_PORT = 2525;
-export const DEFAULT_DOMAIN = "smtpsaurus.email";
-
+/**
+ * Configuration options for an `smtpsaurus` instance.
+ */
 export type ServerConfig = {
+	/**
+	 * Optional domain name for the server.
+	 * @default DEFAULT_DOMAIN
+	 */
 	domain?: string;
+
+	/**
+	 * Optional port number for the server.
+	 * @default DEFAULT_PORT
+	 */
 	port?: number;
 };
 
 export class SmtpServer {
+	/**
+	 * Domain name associated with the server; for example, smtpsaurus.email.
+	 * This is the name that the server uses to identify itself, such as in
+	 * the initial greeting, to the sender during an SMTP transaction
+	 */
 	domain: string;
+
+	/**
+	 * Hostname where the server is running; for example 127.0.0.1.
+	 */
 	hostname: string;
+
+	/**
+	 * Port number the server is listening on.
+	 */
 	port: number;
 
-	mailbox = {
+	/**
+	 * Provides access to mailbox operations, such as retrieving emails.
+	 *
+	 * @property {function(string): Promise<Data | null>} get Retrieve an e-mail
+	 * by its Message-ID.
+	 * @property {function(string): Promise<Data | null>} getBySender Retrieve
+	 * emails sent by a
+	 * specific sender.
+	 * @property {function(string): Promise<Data | null>} getByRecipient
+	 * Retrieve an all e-mails sent to a specific recipient.
+	 */
+	mailbox: {
+		get: (messageId: string) => Promise<Data | null>;
+		getBySender: (senderEmail: string) => Promise<Data | null>;
+		getByRecipient: (recipientEmail: string) => Promise<Data | null>;
+	} = {
 		get: store.get,
-		getBySender: store.getBySender,
+		getBySender: store.getByRecipient,
 		getByRecipient: store.getByRecipient,
 	} as const;
 
+	/**
+	 * @private
+	 * TCP listener for incoming connections.
+	 */
 	private listener: Deno.TcpListener | undefined;
+
+	/**
+	 * @private
+	 * Promise that resolves when the main server loop exits. The main sever
+	 * loop exits either `this.listener` becomes `undefined`, which happens when
+	 * a connection closes or when we call `close()`, or when an unhandled
+	 * exception occurs.
+	 */
 	private mainLoopExitSignal: Promise<void>;
 
+	/**
+	 * Constructor for the SmtpServer class. Initializes server configuration
+	 * and starts listening for incoming connections.
+	 *
+	 * @param config Optional configuration object specifying domain and port.
+	 */
 	constructor(config?: ServerConfig) {
 		this.domain = config?.domain ?? DEFAULT_DOMAIN;
 		this.port = config?.port ?? DEFAULT_PORT;
@@ -47,6 +106,15 @@ export class SmtpServer {
 		this.mainLoopExitSignal = this.startMainLoop();
 	}
 
+	/**
+	 * @private
+	 * Handles an individual SMTP connection. This method implements the
+	 * sequence of commands specified in RFC812 (https://www.rfc-editor.org/rfc/rfc821.txt)
+	 * for handling an SMTP transaction.
+	 *
+	 * @param connection The TCP connection to handle
+	 * @returns Promise that resolves when an SMTP transaction has finished.
+	 */
 	private async handleConnection(connection: Deno.TcpConn): Promise<void> {
 		const clientHostname = connection.remoteAddr.hostname;
 		const clientPort = connection.remoteAddr.port;
@@ -187,6 +255,13 @@ export class SmtpServer {
 		);
 	}
 
+	/**
+	 * @private
+	 * Main loop for handling incoming connections.
+	 * This method runs continuously, accepting new connections and processing them.
+	 *
+	 * @returns Promise that resolves when the server stops
+	 */
 	private async startMainLoop(): Promise<void> {
 		while (this.listener) {
 			try {
@@ -205,6 +280,12 @@ export class SmtpServer {
 		}
 	}
 
+	/**
+	 * Stop the server.
+	 *
+	 * @returns Promise that resolves when the listener has closed and the
+	 * main loop has exited.
+	 */
 	async stop(): Promise<void> {
 		this.listener?.close();
 		this.listener = undefined;
