@@ -58,14 +58,20 @@ const server = new SmtpServer({
 });
 ```
 
+## API documentation
+
+Please see the automatically generated API documentation on JSR:
+https://jsr.io/@smtpsaurus/smtpsaurus/doc.
+
 ## Examples
 
-### Using `smtpsaurus` in tests 🧪
+### Using `smtpsaurus` in tests
 
 ```ts
+import { SmtpServer } from "jsr:@smtpsaurus/smtpsaurus";
 import { expect } from "jsr:@std/expect";
 import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
-import { DEFAULT_HOSTNAME, DEFAULT_PORT, SmtpServer } from "./smtpsaurus.ts";
+// @ts-types="npm:@types/nodemailer"
 import nodemailer from "nodemailer";
 
 describe("SmtpServer", () => {

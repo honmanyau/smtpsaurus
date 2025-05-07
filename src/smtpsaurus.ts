@@ -29,6 +29,65 @@ export type ServerConfig = {
 	port?: number;
 };
 
+/**
+ * A basic SMTP server that performs the essential parts of an SMTP transaction,
+ * according to the sequence specified in RFC 821 (https://www.rfc-editor.org/rfc/rfc821.txt),
+ * for "sending" and e-mail and provides an interface for retrieving those
+ * e-mails.
+ *
+ * @example Using `smtpsaurus` for receiving and retrieving e-mails in tests.
+ * ```ts
+ * import { SmtpServer } from "jsr:@smtpsaurus/smtpsaurus";
+ * import { expect } from "jsr:@std/expect";
+ * import { afterEach, beforeEach, describe, it } from "jsr:@std/testing/bdd";
+ * // @ts-types="npm:@types/nodemailer"
+ * import nodemailer from "nodemailer";
+ *
+ * describe("SmtpServer", () => {
+ *   let server: SmtpServer;
+ *
+ *   beforeEach(() => {
+ *     server = new SmtpServer();
+ *	 });
+ *
+ *   afterEach(async () => {
+ *     await server.stop();
+ *   });
+ *
+ *   it("process a well-formed sequence of commands", async () => {
+ *     const transporter = nodemailer.createTransport({
+ *       host: server.hostname,
+ *       port: server.port,
+ *       secure: false,
+ *     });
+ *
+ *     // Send an e-mail with nodemailer.
+ *     const info = await transporter.sendMail({
+ *       from: "test@smtpsaurus.email",
+ *       to: "user@smtpsaurus.com",
+ *       subject: "Test Email",
+ *       text: "Hello, world!",
+ *     });
+ *
+ *     expect(info.response).toBe("250 OK");
+ *
+ *     // Retrieve the sent e-mail from smtpsaurus.
+ *     const data = await server.mailbox.get(info.messageId);
+ *
+ *     assertExists(data);
+ *
+ *     expect(data.messageId).toBe(info.messageId);
+ *     expect(data.senderEmail).toBe(info.envelope.from);
+ *     expect(data.recipientEmails).toEqual(
+ *       expect.arrayContaining(info.envelope.to),
+ *     );
+ *
+ *     transporter.close();
+ *   });
+ * });
+```
+ *
+ */
 export class SmtpServer {
 	/**
 	 * Domain name associated with the server; for example, smtpsaurus.email.
@@ -105,7 +164,7 @@ export class SmtpServer {
 	/**
 	 * @private
 	 * Handles an individual SMTP connection. This method implements the
-	 * sequence of commands specified in RFC812 (https://www.rfc-editor.org/rfc/rfc821.txt)
+	 * sequence of commands specified in RFC 821 (https://www.rfc-editor.org/rfc/rfc821.txt)
 	 * for handling an SMTP transaction.
 	 *
 	 * @param connection The TCP connection to handle
@@ -116,9 +175,6 @@ export class SmtpServer {
 		const clientPort = connection.remoteAddr.port;
 
 		console.log(`🛜 New connection from ${clientHostname}:${clientPort}.`);
-
-		// See RFC821, section 4.3 SEQUENCING OF COMMANDS AND REPLIES:
-		// https://www.rfc-editor.org/rfc/rfc821.txt
 
 		// Initial greeting
 		await writeMessage(
