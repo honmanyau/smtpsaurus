@@ -1,11 +1,12 @@
 {
 	"lock": true,
 	"name": "@smtpsaurus/smtpsaurus",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"license": "MIT",
 	"exports": "./src/mod.ts",
 	"publish": {
 		"include": [
+			"CHANGELOG.md",
 			"CONTRIBUTING.md",
 			"LICENSE.md",
 			"README.md",
