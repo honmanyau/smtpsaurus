@@ -230,7 +230,7 @@ export class SmtpServer {
 
 		// Handle MAIL
 		const mailLine = await readMessage(connection);
-		const [, mailCommand, senderEmail] = mailLine?.match(
+		const [, _mailCommand, _senderEmail] = mailLine?.match(
 			new RegExp(`^(MAIL) FROM:<(.+?@.+?\..+)${CRLF}$`),
 		) ?? [];
 
@@ -245,7 +245,7 @@ export class SmtpServer {
 		let nextLine = await readMessage(connection);
 
 		while (nextLine?.startsWith("RCPT")) {
-			const [, recipientCommand, recipientEmail] = nextLine?.match(
+			const [, _recipientCommand, recipientEmail] = nextLine?.match(
 				new RegExp(`^(RCPT) TO:<(.+?@.+?\..+)${CRLF}$`),
 			) ?? [];
 
@@ -261,9 +261,10 @@ export class SmtpServer {
 		// Handle DATA
 		const dataLine = nextLine;
 
-		// TODO|Honman Yau|2025-05-05
-		// Handle error cases for the DATA command.
-		if (dataLine !== `DATA${CRLF}`) {}
+		if (dataLine !== `DATA${CRLF}`) {
+			// TODO|Honman Yau|2025-05-05
+			// Handle error cases for the DATA command.
+		}
 
 		await writeMessage(
 			connection,
@@ -297,9 +298,10 @@ export class SmtpServer {
 		// Handle QUIT
 		const quitLine = await readMessage(connection);
 
-		// TODO|Honman Yau|2025-05-05
-		// Handle error cases for the QUIT command.
-		if (quitLine !== `QUIT${CRLF}`) {}
+		if (quitLine !== `QUIT${CRLF}`) {
+			// TODO|Honman Yau|2025-05-05
+			// Handle error cases for the QUIT command.
+		}
 
 		await writeMessage(
 			connection,
