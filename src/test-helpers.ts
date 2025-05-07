@@ -3,11 +3,11 @@ import { Data } from "./store.ts";
 export function generateEmail(): Data {
 	const senderEmail = "rawr@smtpsaurus.email";
 	const recipientEmails = ["deno@smtpsaurus.email", "node@smtpsaurus.email"];
-	const messageId = `<${crypto.randomUUID()}@smtpsaurus.email`;
+	const messageId = `<${crypto.randomUUID()}@smtpsaurus.email>`;
 	const email = `From: smtpsaurus <${senderEmail}>
 To: ${recipientEmails.join(", ")}
 Subject: Rawr!
-Message-ID: <dc2c3c7e-605c-a3cc-6ffa-4c109d53bd5b@smtpsaurus.email>
+Message-ID: ${messageId}
 Date: Tue, 06 May 2025 11:36:15 +0000
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
