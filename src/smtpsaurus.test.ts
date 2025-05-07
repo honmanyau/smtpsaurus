@@ -1,4 +1,4 @@
-import { assertExists } from "$std/assert/assert_exists.ts";
+import { assertExists } from "@std/assert";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 // @ts-types="npm:@types/nodemailer"

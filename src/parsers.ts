@@ -1,4 +1,4 @@
-import { assertExists } from "$std/assert/assert_exists.ts";
+import { assertExists } from "@std/assert";
 
 type HeaderSection = {
 	from: string;
