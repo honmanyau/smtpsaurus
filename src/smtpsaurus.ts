@@ -18,6 +18,7 @@ export type ServerConfig = {
 
 export class SmtpServer {
 	domain: string;
+	hostname: string;
 	port: number;
 
 	mailbox = {
@@ -32,8 +33,10 @@ export class SmtpServer {
 	constructor(config?: ServerConfig) {
 		this.domain = config?.domain ?? DEFAULT_DOMAIN;
 		this.port = config?.port ?? DEFAULT_PORT;
+		this.hostname = DEFAULT_HOSTNAME;
+
 		this.listener = Deno.listen({
-			hostname: DEFAULT_HOSTNAME,
+			hostname: this.hostname,
 			port: this.port,
 		});
 
