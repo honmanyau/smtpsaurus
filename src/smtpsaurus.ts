@@ -63,7 +63,7 @@ export type ServerConfig = {
  *
  *     // Send an e-mail with nodemailer.
  *     const info = await transporter.sendMail({
- *       from: "test@smtpsaurus.email",
+ *       from:`"smtpsaurus" <test@smtpsaurus.email>`,
  *       to: "user@smtpsaurus.com",
  *       subject: "Test Email",
  *       text: "Hello, world!",
