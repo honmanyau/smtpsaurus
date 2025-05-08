@@ -23,6 +23,16 @@ export type ServerConfig = {
 	domain?: string;
 
 	/**
+	 * A flag that indicates whether or not `smtpsaurus` should attempt to find
+	 * an open port to start `smtpsaurus` on in the event that a port is already
+	 * in use. Setting this to true may be necessary when running tests in
+	 * parallel. `smtpsaurus` simply increment the base port number by 1 until
+	 * an open one is found.
+	 * @default false
+	 */
+	findPortOnConflict?: boolean;
+
+	/**
 	 * Optional port number for the server.
 	 * @default DEFAULT_PORT
 	 */
@@ -47,7 +57,10 @@ export type ServerConfig = {
  *   let server: SmtpServer;
  *
  *   beforeEach(() => {
- *     server = new SmtpServer();
+ *     // Setting `findPortOnConflict` to `true` may be useful when running
+ *     // tests in parallel, as it allows `smtpsaurus` to find an open
+ *     // automatically if the one specified is in use.
+ *     server = new SmtpServer({ port: 42024, findPortOnConflict: true });
  *	 });
  *
  *   afterEach(async () => {
@@ -149,10 +162,35 @@ export class SmtpServer {
 		this.port = config?.port ?? DEFAULT_PORT;
 		this.hostname = DEFAULT_HOSTNAME;
 
-		this.listener = Deno.listen({
-			hostname: this.hostname,
-			port: this.port,
-		});
+		if (!config?.findPortOnConflict) {
+			this.listener = Deno.listen({
+				hostname: this.hostname,
+				port: this.port,
+			});
+		} else {
+			while (!this.listener && this.port <= 65535) {
+				try {
+					this.listener = Deno.listen({
+						hostname: this.hostname,
+						port: this.port,
+					});
+				} catch (error) {
+					if (error instanceof Deno.errors.AddrInUse) {
+						this.port++;
+
+						continue;
+					}
+
+					throw error;
+				}
+			}
+		}
+
+		if (!this.listener) {
+			throw new Error(
+				"😰 smtpsaurus could not find an open port to listen on!",
+			);
+		}
 
 		console.log(
 			`🦕 smtpsaurus listening at ${this.listener.addr.hostname} on port ${this.port}.`,
