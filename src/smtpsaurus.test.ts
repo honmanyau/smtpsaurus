@@ -259,6 +259,36 @@ describe("SmtpServer", () => {
 			await connection.close();
 		});
 	});
+
+	describe("attempting to start multiple instances with the same port number", () => {
+		it("throws an address in use error", async () => {
+			const server = new SmtpServer();
+
+			expect(() => new SmtpServer()).toThrow(Deno.errors.AddrInUse);
+
+			await server.stop();
+		});
+
+		it("starts a new service at the next available port when `findOpenPort` is set to true", () => {
+			const port = 42024;
+
+			const server1 = new SmtpServer({
+				port,
+				findPortOnConflict: true,
+			});
+
+			const server2 = new SmtpServer({
+				port,
+				findPortOnConflict: true,
+			});
+
+			expect(server1.port).toBe(port);
+			expect(server2.port).toBe(port + 1);
+
+			server1.stop();
+			server2.stop();
+		});
+	});
 });
 
 function createConnection(): Promise<Deno.TcpConn> {
