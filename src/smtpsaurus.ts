@@ -66,7 +66,11 @@ export type ServerConfig = {
  *     // Setting `findPortOnConflict` to `true` may be useful when running
  *     // tests in parallel, as it allows `smtpsaurus` to find an open
  *     // automatically if the one specified is in use.
- *     server = new SmtpServer({ port: 42024, findPortOnConflict: true });
+ *     server = new SmtpServer({
+ *       port: 42024,
+ *       findPortOnConflict: true,
+ *       quiet: true,
+ *     });
  * 	 });
  *
  *   afterEach(async () => {
