@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.3
+
+- Add the ability to run `smtpsaurus` under quiet mode, which stops `smtpsaurus`
+  from logging to STDOUT.
+
 ## v0.1.2
 
 - Implement the ability for `smtpsaurus` to optionally find an open port to
