@@ -37,6 +37,12 @@ export type ServerConfig = {
 	 * @default DEFAULT_PORT
 	 */
 	port?: number;
+
+	/**
+	 * Whether or prevent `smtpsaurus` from logging info to the console.
+	 * @default false
+	 */
+	quiet?: boolean;
 };
 
 /**
@@ -61,7 +67,7 @@ export type ServerConfig = {
  *     // tests in parallel, as it allows `smtpsaurus` to find an open
  *     // automatically if the one specified is in use.
  *     server = new SmtpServer({ port: 42024, findPortOnConflict: true });
- *	 });
+ * 	 });
  *
  *   afterEach(async () => {
  *     await server.stop();
@@ -98,26 +104,28 @@ export type ServerConfig = {
  *     transporter.close();
  *   });
  * });
-```
- *
+ * ```
  */
 export class SmtpServer {
 	/**
 	 * Domain name associated with the server; for example, smtpsaurus.email.
 	 * This is the name that the server uses to identify itself, such as in
 	 * the initial greeting, to the sender during an SMTP transaction
+	 * @default DEFAULT_DOMAIN;
 	 */
 	domain: string;
 
 	/**
 	 * Hostname where the server is running; for example 127.0.0.1.
+	 * @default DEFAULT_HOSTNAME;
 	 */
 	hostname: string;
 
 	/**
 	 * Port number the server is listening on.
+	 * @default DEFAULT_PORT;
 	 */
-	port: number;
+	port: number = DEFAULT_PORT;
 
 	/**
 	 * Provides access to mailbox operations, such as retrieving emails.
@@ -152,6 +160,24 @@ export class SmtpServer {
 	private mainLoopExitSignal: Promise<void>;
 
 	/**
+	 * @private
+	 * Whether or not `smtpsaurus` should log info to the console.
+	 * @default false
+	 */
+	private quiet: boolean = false;
+
+	/**
+	 * @private
+	 * A wrapper around `console.log` that only logs to the console when
+	 * `smtpsaurus` is not running under quiet mode.
+	 */
+	private log = (...data: Parameters<typeof console.log>) => {
+		if (this.quiet) return;
+
+		console.log(...data);
+	};
+
+	/**
 	 * Constructor for the SmtpServer class. Initializes server configuration
 	 * and starts listening for incoming connections.
 	 *
@@ -161,6 +187,7 @@ export class SmtpServer {
 		this.domain = config?.domain ?? DEFAULT_DOMAIN;
 		this.port = config?.port ?? DEFAULT_PORT;
 		this.hostname = DEFAULT_HOSTNAME;
+		this.quiet = !!config?.quiet;
 
 		if (!config?.findPortOnConflict) {
 			this.listener = Deno.listen({
@@ -192,7 +219,7 @@ export class SmtpServer {
 			);
 		}
 
-		console.log(
+		this.log(
 			`🦕 smtpsaurus listening at ${this.listener.addr.hostname} on port ${this.port}.`,
 		);
 
@@ -212,7 +239,7 @@ export class SmtpServer {
 		const clientHostname = connection.remoteAddr.hostname;
 		const clientPort = connection.remoteAddr.port;
 
-		console.log(`🛜 New connection from ${clientHostname}:${clientPort}.`);
+		this.log(`🛜 New connection from ${clientHostname}:${clientPort}.`);
 
 		// Initial greeting
 		await writeMessage(
