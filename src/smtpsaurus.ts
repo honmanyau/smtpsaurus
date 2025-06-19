@@ -355,7 +355,8 @@ export class SmtpServer {
 	/**
 	 * @private
 	 * Main loop for handling incoming connections.
-	 * This method runs continuously, accepting new connections and processing them.
+	 * This method runs continuously, accepting new connections and processing
+	 * them.
 	 *
 	 * @returns Promise that resolves when the server stops
 	 */
@@ -375,6 +376,16 @@ export class SmtpServer {
 				throw error;
 			}
 		}
+	}
+
+	/**
+	 * Check whether or not the server has started and is listening.
+	 *
+	 * @returns A boolean that indicates whether or not the server
+	 * is listening.
+	 */
+	isListening(): boolean {
+		return !!this.listener;
 	}
 
 	/**

@@ -304,6 +304,30 @@ describe("SmtpServer", () => {
 			}
 		});
 	});
+
+	describe("`isListening()", () => {
+		let server: SmtpServer;
+
+		beforeEach(() => {
+			server = new SmtpServer();
+		});
+
+		afterEach(async () => {
+			await server.stop();
+		});
+
+		it("correctly describes the state of the server", async () => {
+			expect(server.isListening()).toBe(false);
+
+			server.start();
+
+			expect(server.isListening()).toBe(true);
+
+			await server.stop();
+
+			expect(server.isListening()).toBe(false);
+		});
+	});
 });
 
 function createConnection(): Promise<Deno.TcpConn> {
