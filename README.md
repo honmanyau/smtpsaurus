@@ -2,7 +2,7 @@
 
 ## Introduction
 
-`smtpsaurus` is a local SMTP server built for Deno **test** environments. It
+`smtpsaurus` is a local SMTP server built for Deno 2 for testing purposes. It
 implements basic functionality for receiving and storing e-mails, and provides
 an API for fetching stored e-mails.
 
@@ -11,9 +11,6 @@ not be used in production systems. It currently lacks features such as TLS,
 authentication, and has minimal validation and error handling.
 
 ## Installation
-
-`smtpsaurus` is written with Deno 2 in mind. While version 1 is not officially
-supported, tests are passing in version 1.45.0.
 
 To add `smtpsaurus` to your Deno project:
 
@@ -36,6 +33,9 @@ import { SmtpServer } from "jsr:@smtpsaurus/smtpsaurus";
 // Creating a new instance and starting the server.
 const server = new SmtpServer();
 
+// Start the server.
+server.start();
+
 // Retrieving e-mails.
 const messageId = "<b3e84b8d-0128-422e-ba89-af074e87d28e@smtpsaurus.email>";
 const senderEmail = "rawr@smtpsaurus.email";
@@ -56,6 +56,8 @@ const server = new SmtpServer({
 	domain: "happy-smtpsaurus.email",
 	port: 65535,
 });
+
+server.start();
 ```
 
 ## API documentation
@@ -86,6 +88,8 @@ describe("SmtpServer", () => {
 			findPortOnConflict: true
 			quiet: true
 		});
+
+		server.start();
 	});
 
 	afterEach(async () => {

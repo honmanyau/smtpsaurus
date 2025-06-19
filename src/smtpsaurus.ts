@@ -71,6 +71,8 @@ export type ServerConfig = {
  *       findPortOnConflict: true,
  *       quiet: true,
  *     });
+ *
+ *     server.start();
  * 	 });
  *
  *   afterEach(async () => {
@@ -150,6 +152,13 @@ export class SmtpServer {
 
 	/**
 	 * @private
+	 * A flag that indicates whether or not `smtpsaurus` should attempt to find
+	 * another open port to start `smtpsaurus` on in the event of a conflict.
+	 */
+	private findPortOnConflict: boolean = false;
+
+	/**
+	 * @private
 	 * TCP listener for incoming connections.
 	 */
 	private listener: Deno.TcpListener | undefined;
@@ -161,7 +170,7 @@ export class SmtpServer {
 	 * a connection closes or when we call `close()`, or when an unhandled
 	 * exception occurs.
 	 */
-	private mainLoopExitSignal: Promise<void>;
+	private mainLoopExitSignal: Promise<void> | undefined;
 
 	/**
 	 * @private
@@ -192,42 +201,7 @@ export class SmtpServer {
 		this.port = config?.port ?? DEFAULT_PORT;
 		this.hostname = DEFAULT_HOSTNAME;
 		this.quiet = !!config?.quiet;
-
-		if (!config?.findPortOnConflict) {
-			this.listener = Deno.listen({
-				hostname: this.hostname,
-				port: this.port,
-			});
-		} else {
-			while (!this.listener && this.port <= 65535) {
-				try {
-					this.listener = Deno.listen({
-						hostname: this.hostname,
-						port: this.port,
-					});
-				} catch (error) {
-					if (error instanceof Deno.errors.AddrInUse) {
-						this.port++;
-
-						continue;
-					}
-
-					throw error;
-				}
-			}
-		}
-
-		if (!this.listener) {
-			throw new Error(
-				"😰 smtpsaurus could not find an open port to listen on!",
-			);
-		}
-
-		this.log(
-			`🦕 smtpsaurus listening at ${this.listener.addr.hostname} on port ${this.port}.`,
-		);
-
-		this.mainLoopExitSignal = this.startMainLoop();
+		this.findPortOnConflict = !!config?.findPortOnConflict;
 	}
 
 	/**
@@ -381,7 +355,8 @@ export class SmtpServer {
 	/**
 	 * @private
 	 * Main loop for handling incoming connections.
-	 * This method runs continuously, accepting new connections and processing them.
+	 * This method runs continuously, accepting new connections and processing
+	 * them.
 	 *
 	 * @returns Promise that resolves when the server stops
 	 */
@@ -404,6 +379,57 @@ export class SmtpServer {
 	}
 
 	/**
+	 * Check whether or not the server has started and is listening.
+	 *
+	 * @returns A boolean that indicates whether or not the server
+	 * is listening.
+	 */
+	isListening(): boolean {
+		return !!this.listener;
+	}
+
+	/**
+	 * Start the server.
+	 */
+	start(): void {
+		if (this.findPortOnConflict) {
+			while (!this.listener && this.port <= 65535) {
+				try {
+					this.listener = Deno.listen({
+						hostname: this.hostname,
+						port: this.port,
+					});
+				} catch (error) {
+					if (error instanceof Deno.errors.AddrInUse) {
+						this.port++;
+
+						continue;
+					}
+
+					throw error;
+				}
+			}
+		} else {
+			this.listener = Deno.listen({
+				hostname: this.hostname,
+				port: this.port,
+			});
+		}
+
+		if (!this.listener) {
+			throw new Error(
+				"😰 smtpsaurus could not find an open port to listen on!",
+			);
+		}
+
+		this.log(
+			`🦕 smtpsaurus listening at ${this.listener.addr.hostname} on port ${this.port}.`,
+		);
+
+		this.mainLoopExitSignal = this.startMainLoop();
+	}
+
+	/**
 	 * Stop the server.
 	 *
 	 * @returns Promise that resolves when the listener has closed and the
@@ -412,6 +438,7 @@ export class SmtpServer {
 	async stop(): Promise<void> {
 		this.listener?.close();
 		this.listener = undefined;
+
 		await this.mainLoopExitSignal;
 	}
 }

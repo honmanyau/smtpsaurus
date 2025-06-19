@@ -1,8 +1,21 @@
 # Changelog
 
+## v0.2.0
+
+⚠️ This version contains a breaking change and the unofficial support for
+version 1.45.0 has now been dropped.
+
+- Instantiating a new instance with new SmtpServer() no longer starts the server
+  automatically. To start a server, call the start() method on the server
+  instance. This change was introduced so that the caller can have greater
+  control over the lifecycle of a smtpsaurus instance, especially in test
+  environments.
+- Add a `isListening` method for determining whether or not an `smtpsaurus`
+  instance has started.
+
 ## v0.1.3
 
-- Add the ability to run `smtpsaurus` under quiet mode, which stops `smtpsaurus`
+- Add the ability to run `smtpsaurus` in quiet mode, which stops `smtpsaurus`
   from logging to STDOUT.
 
 ## v0.1.2
