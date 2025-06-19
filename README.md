@@ -36,6 +36,9 @@ import { SmtpServer } from "jsr:@smtpsaurus/smtpsaurus";
 // Creating a new instance and starting the server.
 const server = new SmtpServer();
 
+// Start the server.
+server.start();
+
 // Retrieving e-mails.
 const messageId = "<b3e84b8d-0128-422e-ba89-af074e87d28e@smtpsaurus.email>";
 const senderEmail = "rawr@smtpsaurus.email";
@@ -56,6 +59,8 @@ const server = new SmtpServer({
 	domain: "happy-smtpsaurus.email",
 	port: 65535,
 });
+
+server.start();
 ```
 
 ## API documentation
@@ -86,6 +91,8 @@ describe("SmtpServer", () => {
 			findPortOnConflict: true
 			quiet: true
 		});
+
+		server.start();
 	});
 
 	afterEach(async () => {

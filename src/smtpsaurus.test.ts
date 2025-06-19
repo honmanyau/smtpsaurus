@@ -14,6 +14,8 @@ describe("SmtpServer", () => {
 
 		beforeEach(() => {
 			server = new SmtpServer();
+
+			server.start();
 		});
 
 		afterEach(async () => {
@@ -237,6 +239,8 @@ describe("SmtpServer", () => {
 				domain: customDomain,
 				port: customPort,
 			});
+
+			server.start();
 		});
 
 		afterEach(async () => {
@@ -262,11 +266,17 @@ describe("SmtpServer", () => {
 
 	describe("attempting to start multiple instances with the same port number", () => {
 		it("throws an address in use error", async () => {
-			const server = new SmtpServer();
+			const server1 = new SmtpServer();
+			const server2 = new SmtpServer();
 
-			expect(() => new SmtpServer()).toThrow(Deno.errors.AddrInUse);
+			try {
+				server1.start();
 
-			await server.stop();
+				expect(() => server2.start()).toThrow(Deno.errors.AddrInUse);
+			} finally {
+				await server1.stop();
+				await server2.stop();
+			}
 		});
 
 		it("starts a new service at the next available port when `findOpenPort` is set to true", () => {
@@ -282,11 +292,16 @@ describe("SmtpServer", () => {
 				findPortOnConflict: true,
 			});
 
-			expect(server1.port).toBe(port);
-			expect(server2.port).toBe(port + 1);
+			try {
+				server1.start();
+				server2.start();
 
-			server1.stop();
-			server2.stop();
+				expect(server1.port).toBe(port);
+				expect(server2.port).toBe(port + 1);
+			} finally {
+				server1.stop();
+				server2.stop();
+			}
 		});
 	});
 });
