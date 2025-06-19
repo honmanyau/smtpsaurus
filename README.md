@@ -2,7 +2,7 @@
 
 ## Introduction
 
-`smtpsaurus` is a local SMTP server built for Deno **test** environments. It
+`smtpsaurus` is a local SMTP server built for Deno 2 for testing purposes. It
 implements basic functionality for receiving and storing e-mails, and provides
 an API for fetching stored e-mails.
 
@@ -11,9 +11,6 @@ not be used in production systems. It currently lacks features such as TLS,
 authentication, and has minimal validation and error handling.
 
 ## Installation
-
-`smtpsaurus` is written with Deno 2 in mind. While version 1 is not officially
-supported, tests are passing in version 1.45.0.
 
 To add `smtpsaurus` to your Deno project:
 
