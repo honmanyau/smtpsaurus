@@ -169,8 +169,12 @@ export class SmtpServer {
 	 * loop exits either `this.listener` becomes `undefined`, which happens when
 	 * a connection closes or when we call `close()`, or when an unhandled
 	 * exception occurs.
+	 *
+	 * The `null` state indicates a main loop is initialising and prevent the
+	 * race condition where multiple references to the same smtpsaurus instance
+	 * attempt to start the loop.
 	 */
-	private mainLoopExitSignal: Promise<void> | undefined;
+	private mainLoopExitSignal: Promise<void> | null | undefined;
 
 	/**
 	 * @private
@@ -426,7 +430,10 @@ export class SmtpServer {
 			`🦕 smtpsaurus listening at ${this.listener.addr.hostname} on port ${this.port}.`,
 		);
 
-		this.mainLoopExitSignal = this.startMainLoop();
+		if (this.mainLoopExitSignal === undefined) {
+			this.mainLoopExitSignal = null;
+			this.mainLoopExitSignal = this.startMainLoop();
+		}
 	}
 
 	/**
