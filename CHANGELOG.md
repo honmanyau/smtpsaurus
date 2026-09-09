@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1
+
+- Protect the main loop initialisation logic against a race condition that may
+  occur when multiple references to `smtpsaurus` attempt to start the main loop
+  at the same time.
+
 ## v0.2.0
 
 ⚠️ This version contains a breaking change and the unofficial support for

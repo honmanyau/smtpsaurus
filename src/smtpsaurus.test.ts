@@ -305,6 +305,23 @@ describe("SmtpServer", () => {
 		});
 	});
 
+	describe("when multiple references to the same instance starts the main loop", () => {
+		it("does not lead to uncaught exceptions", () => {
+			const port = 42024;
+
+			const server = new SmtpServer({
+				port,
+				findPortOnConflict: true,
+			});
+
+			server.start();
+			server.start();
+			server.start();
+
+			server.stop();
+		});
+	});
+
 	describe("`isListening()", () => {
 		let server: SmtpServer;
 
